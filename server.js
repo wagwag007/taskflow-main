@@ -5,8 +5,8 @@ const PORT = process.env.PORT || 3001;
 const users = [
   {
     id: 1,
-    nome: 'Administrador',
-    email: 'admin@taskflow.com',
+    nome: 'wagner',
+    email: 'wagnerfilho321@gmail.com',
     senha: '123456',
   },
 ];
