@@ -22,11 +22,7 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={
-              <PrivateRoute isAuthenticated={isAuthenticated}>
-                <Dashboard />
-              </PrivateRoute>
-            }
+            element={<Login login={login} />}
           />
           <Route
             path="/dashboard"

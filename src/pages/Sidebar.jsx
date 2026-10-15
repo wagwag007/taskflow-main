@@ -9,7 +9,7 @@ export default function Sidebar({ isAuthenticated, onLogout }) {
         <ul className={styles.navList}>
           {isAuthenticated && (
             <li>
-              <NavLink to="/" end className={({ isActive }) => isActive ? styles.active : undefined}>
+              <NavLink to="/dashboard" end className={({ isActive }) => isActive ? styles.active : undefined}>
                 Dashboard
               </NavLink>
             </li>

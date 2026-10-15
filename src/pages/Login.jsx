@@ -24,7 +24,7 @@ function Login({ login }) {
       const { token, usuario } = resposta.data;
 
       login(usuario, token); 
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao fazer login');
       setShake(true);
