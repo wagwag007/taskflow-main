@@ -31,14 +31,6 @@
   word-break: break-word;
 }
 
-.cepDados {
-  display: block;
-  margin-top: 8px;
-  color: #94A3B8;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
 .tarefa.concluida {
   opacity: 0.6;
 }

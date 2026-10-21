@@ -81,8 +81,6 @@ function ListaTarefas({ tarefas, onDeletar, onConcluir, onEditar }) {
                     concluida={tarefa.concluida}
                     prioridade={tarefa.prioridade}
                     status={tarefa.status}
-                    cep={tarefa.cep}
-                    cepInfo={tarefa.cepInfo}
                     onDeletar={() => onDeletar(tarefa.id)}
                     onConcluir={() => onConcluir(tarefa.id)}
                     onStatusChange={(newStatus) =>

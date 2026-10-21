@@ -5,8 +5,6 @@ function TarefaItem({
   concluida = false,
   prioridade = 'media',
   status = 'pending',
-  cep,
-  cepInfo,
   onDeletar,
   onConcluir,
   onStatusChange,
@@ -25,12 +23,6 @@ function TarefaItem({
   const classePrioridade =
     styles['badge-prioridade'] + ' ' + styles['badge-' + prioridade];
 
-  const endereco = cepInfo
-    ? `${cepInfo.logradouro || ''}${cepInfo.logradouro ? ', ' : ''}${cepInfo.bairro || ''}${cepInfo.bairro ? ' — ' : ''}${cepInfo.localidade || ''}${cepInfo.uf ? `/${cepInfo.uf}` : ''}`
-    : cep
-    ? `CEP: ${cep}`
-    : null;
-
   return (
     <li className={classeItem}>
       <div className={styles.taskContent}>
@@ -38,7 +30,6 @@ function TarefaItem({
           <span className={classeTexto} onClick={onConcluir}>
             {texto}
           </span>
-          {endereco && <span className={styles.cepDados}>{endereco}</span>}
         </div>
         <span className={classePrioridade}>{prioridade}</span>
       </div>

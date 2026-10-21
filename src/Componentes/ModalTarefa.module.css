@@ -47,18 +47,6 @@
   outline: none;
 }
 
-.cepInfo {
-  margin: 0;
-  color: #94A3B8;
-  font-size: 0.9rem;
-}
-
-.cepErro {
-  margin: 0;
-  color: #FCA5A5;
-  font-size: 0.9rem;
-}
-
 .actions {
   display: flex;
   gap: 8px;

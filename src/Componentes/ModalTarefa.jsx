@@ -1,70 +1,24 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import styles from './ModalTarefa.module.css';
 
 function ModalTarefa({ isOpen, onClose, onSave, onDelete, task }) {
   const [texto, setTexto] = useState('');
   const [prioridade, setPrioridade] = useState('media');
-  const [cep, setCep] = useState('');
-  const [cepInfo, setCepInfo] = useState(null);
-  const [cepErro, setCepErro] = useState('');
 
   useEffect(() => {
     if (task) {
       setTexto(task.texto || '');
       setPrioridade(task.prioridade || 'media');
-      setCep(task.cep || '');
-      setCepInfo(task.cepInfo || null);
-      setCepErro('');
     } else {
       setTexto('');
       setPrioridade('media');
-      setCep('');
-      setCepInfo(null);
-      setCepErro('');
     }
   }, [task, isOpen]);
-
-  const buscarCep = async (cepValor) => {
-    const cepLimpo = cepValor.replace(/\D/g, '').slice(0, 8);
-    if (cepLimpo.length !== 8) {
-      setCepInfo(null);
-      setCepErro('CEP deve ter 8 dígitos.');
-      return;
-    }
-
-    try {
-      setCepErro('');
-      const response = await axios.get(
-        `https://viacep.com.br/ws/${cepLimpo}/json/`
-      );
-
-      if (response.data.erro) {
-        setCepInfo(null);
-        setCepErro('CEP não encontrado.');
-        return;
-      }
-
-      setCepInfo(response.data);
-    } catch (error) {
-      setCepInfo(null);
-      setCepErro('Erro ao buscar o CEP. Tente novamente.');
-    }
-  };
-
-  const handleCepChange = (e) => {
-    const raw = e.target.value;
-    const apenasDigitos = raw.replace(/\D/g, '').slice(0, 8);
-    setCep(apenasDigitos);
-    setCepInfo(null);
-    setCepErro('');
-    if (apenasDigitos.length === 8) buscarCep(apenasDigitos);
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (texto.trim() === '') return;
-    const payload = { ...(task || {}), texto, prioridade, cep, cepInfo };
+    const payload = { ...(task || {}), texto, prioridade };
     onSave(payload);
   };
 
@@ -102,27 +56,6 @@ function ModalTarefa({ isOpen, onClose, onSave, onDelete, task }) {
               <option value="baixa">🟢 Baixa</option>
             </select>
           </label>
-
-          <label className={styles.label}>
-            CEP (opcional)
-            <input
-              value={cep}
-              onChange={handleCepChange}
-              className={styles.input}
-              inputMode="numeric"
-              maxLength={8}
-              placeholder="CEP (opcional)"
-            />
-          </label>
-
-          {cepInfo && (
-            <p className={styles.cepInfo}>
-              {cepInfo.logradouro ? `${cepInfo.logradouro}, ` : ''}
-              {cepInfo.bairro ? `${cepInfo.bairro} — ` : ''}
-              {cepInfo.localidade ? `${cepInfo.localidade}/${cepInfo.uf}` : ''}
-            </p>
-          )}
-          {cepErro && <p className={styles.cepErro}>{cepErro}</p>}
 
           <div className={styles.actions}>
             <button type="submit" className={styles.saveBtn}>

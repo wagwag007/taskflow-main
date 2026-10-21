@@ -113,41 +113,14 @@ main {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-#input-cep {
-  flex: 0 0 190px;
-  min-width: 140px;
-  padding: 10px 14px;
-  background-color: var(--panel);
-  color: var(--text);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 10px;
-  font-size: 1rem;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-#input-cep::placeholder,
 #input-tarefa::placeholder {
   color: #7c8da8;
 }
 
-#input-cep:focus,
 #input-tarefa:focus,
 #sel-prioridade:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
-}
-
-.cep-info,
-.cep-erro {
-  margin-top: 12px;
-  font-size: 0.95rem;
-  color: var(--muted);
-}
-
-.cep-erro {
-  color: #fca5a5;
 }
 
 #sel-prioridade {
