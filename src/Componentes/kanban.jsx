@@ -3,6 +3,7 @@ import styles from './TarefaItem.module.css';
 
 export default function Kanban({
   tarefas = [],
+  usuarioId,
   onAdicionar,
   onDeletar,
   onConcluir,
@@ -22,8 +23,8 @@ export default function Kanban({
   return (
     <section className={styles.kanbanSection}>
       <div className={styles.kanbanHeader}>
-        <h2>Minhas tarefas</h2>
-        <p>Organize suas atividades por etapa.</p>
+        <h2>Tarefas da equipe</h2>
+        <p>Tarefas organizadas por etapa e responsável.</p>
         <button type="button" className={styles.actionButton} onClick={onAdicionar}>
           Adicionar tarefa
         </button>
@@ -50,6 +51,7 @@ export default function Kanban({
                       key={tarefa.id}
                       {...tarefa}
                       status={obterStatus(tarefa)}
+                      somenteLeitura={Number(tarefa.usuarioId) !== Number(usuarioId)}
                       onEditar={() => onEditar(tarefa)}
                       onDeletar={() => onDeletar(tarefa.id)}
                       onConcluir={() => onConcluir(tarefa.id)}

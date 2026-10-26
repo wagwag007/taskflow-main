@@ -5,6 +5,8 @@ function TarefaItem({
   concluida = false,
   prioridade = 'media',
   status = 'pending',
+  usuarioNome,
+  somenteLeitura = false,
   onDeletar,
   onConcluir,
   onStatusChange,
@@ -30,10 +32,13 @@ function TarefaItem({
           <span className={classeTexto} onClick={onConcluir}>
             {texto}
           </span>
+          <span className={styles.responsavel}>
+            Responsável: {usuarioNome || 'Usuário não identificado'}
+          </span>
         </div>
         <span className={classePrioridade}>{prioridade}</span>
       </div>
-      <div className={styles.taskActions}>
+      {!somenteLeitura && <div className={styles.taskActions}>
         <button
           type="button"
           className={styles.actionButton}
@@ -71,7 +76,7 @@ function TarefaItem({
         <button className={styles.btnDeletar} onClick={onDeletar}>
           Excluir
         </button>
-      </div>
+      </div>}
     </li>
   );
 }

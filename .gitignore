@@ -24,3 +24,5 @@ Thumbs.db
 
 # IDEs
 .idea/
+/src/generated/prisma
+prisma/*.db

@@ -4,7 +4,6 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL_API,
 });
 
-
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -13,11 +12,6 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
-);
-
-api.interceptors.response.use(
-  (response) => response,
   (error) => Promise.reject(error)
 );
 

@@ -4,32 +4,69 @@ import Kanban from "../Componentes/kanban";
 import ModalTarefa from "../Componentes/ModalTarefa";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../Componentes/contexts/AuthContext";
+import api from "../api";
 
-const TAREFAS_STORAGE_KEY_PREFIX = "taskflow:tarefas:";
+const statusPorColuna = {
+  afazer: "pending",
+  andamento: "inprogress",
+  concluido: "done",
+};
 
-function carregarTarefasSalvas(chave) {
-  try {
-    const tarefasSalvas = JSON.parse(localStorage.getItem(chave));
-    return Array.isArray(tarefasSalvas) ? tarefasSalvas : [];
-  } catch {
-    return [];
-  }
+const colunaPorStatus = {
+  pending: "afazer",
+  inprogress: "andamento",
+  done: "concluido",
+};
+
+function normalizarTarefa(tarefa) {
+  const coluna = tarefa.coluna || colunaPorStatus[tarefa.status] || "afazer";
+  return {
+    ...tarefa,
+    texto: tarefa.texto ?? tarefa.titulo ?? "",
+    status: statusPorColuna[coluna] || tarefa.status || "pending",
+    concluida: coluna === "concluido" || tarefa.concluida === true,
+  };
 }
 
 export default function Home() {
   const { usuario } = useContext(AuthContext);
-  const chaveTarefas = `${TAREFAS_STORAGE_KEY_PREFIX}${usuario?.id || "sem-usuario"}`;
-  const [tarefas, setTarefas] = useState(() => carregarTarefasSalvas(chaveTarefas));
-  const [proximaId, setProximaId] = useState(() => {
-    const tarefasSalvas = carregarTarefasSalvas(chaveTarefas);
-    return tarefasSalvas.reduce((maiorId, tarefa) => Math.max(maiorId, Number(tarefa.id) || 0), 0) + 1;
-  });
+  const [tarefas, setTarefas] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(chaveTarefas, JSON.stringify(tarefas));
-  }, [chaveTarefas, tarefas]);
+    let ativo = true;
+
+    async function carregarTarefas() {
+      setCarregando(true);
+      setErro("");
+      try {
+        const resposta = await api.get("/tarefas");
+        if (!Array.isArray(resposta.data)) {
+          throw new Error("A API retornou uma lista de tarefas inválida.");
+        }
+        if (ativo) setTarefas(resposta.data.map(normalizarTarefa));
+      } catch (error) {
+        if (ativo) {
+          setErro(
+            error.response?.data?.erro ||
+              error.message ||
+              "Não foi possível carregar as tarefas. Verifique se a API está rodando."
+          );
+        }
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    carregarTarefas();
+
+    return () => {
+      ativo = false;
+    };
+  }, [usuario?.id]);
 
   const abrirCriar = () => {
     setEditingTask(null);
@@ -46,62 +83,91 @@ export default function Home() {
     setEditingTask(null);
   };
 
-  const handleSave = (taskData) => {
-    if (taskData.id) {
-      // editar
-      setTarefas((current) => current.map((t) => (t.id === taskData.id ? { ...t, ...taskData } : t)));
-    } else {
-      // criar
-      const nova = {
-        ...taskData,
-        id: proximaId,
-        status: taskData.status || "pending",
-        concluida: taskData.concluida || false,
-      };
-      setTarefas((current) => [...current, nova]);
-      setProximaId((id) => id + 1);
-    }
-    fecharModal();
-  };
-
-  const deletarTarefa = (id) => {
-    const tarefasAtualizadas = tarefas.filter((tarefa) => tarefa.id !== id);
-    setTarefas(tarefasAtualizadas);
-    fecharModal();
-  };
-
-  const alternarConcluida = (id, novoStatus) => {
-    const tarefasAtualizadas = tarefas.map((tarefa) => {
-      if (tarefa.id === id) {
-        if (novoStatus) {
-          return {
-            ...tarefa,
-            status: novoStatus,
-            concluida: novoStatus === "done",
-          };
-        }
-        return {
-          ...tarefa,
-          status: tarefa.concluida ? "pending" : "done",
-          concluida: !tarefa.concluida,
-        };
+  const handleSave = async (taskData) => {
+    setErro("");
+    const dadosTarefa = {
+      texto: taskData.texto,
+      prioridade: taskData.prioridade,
+      ...(taskData.status && { coluna: colunaPorStatus[taskData.status] }),
+      ...(taskData.projetoId && { projetoId: taskData.projetoId }),
+      ...(taskData.ordem !== undefined && { ordem: taskData.ordem }),
+      usuarioId: taskData.id ? taskData.usuarioId : usuario?.id,
+    };
+    try {
+      if (taskData.id) {
+        const resposta = await api.put(`/tarefas/${taskData.id}`, dadosTarefa, {
+          params: { usuarioId: taskData.usuarioId },
+        });
+        setTarefas((current) =>
+          current.map((task) =>
+            task.id === resposta.data.id ? normalizarTarefa(resposta.data) : task
+          )
+        );
+      } else {
+        const resposta = await api.post("/tarefas", dadosTarefa);
+        setTarefas((current) => [...current, normalizarTarefa(resposta.data)]);
       }
-      return tarefa;
-    });
-    setTarefas(tarefasAtualizadas);
+      fecharModal();
+    } catch (error) {
+      setErro(error.response?.data?.erro || "Não foi possível salvar a tarefa.");
+    }
+  };
+
+  const deletarTarefa = async (id) => {
+    const tarefa = tarefas.find((item) => item.id === id);
+    const usuarioTarefaId = tarefa?.usuarioId ?? usuario?.id;
+    setErro("");
+    try {
+      await api.delete(`/tarefas/${id}`, {
+        params: { usuarioId: usuarioTarefaId },
+      });
+      setTarefas((current) => current.filter((tarefa) => tarefa.id !== id));
+      fecharModal();
+    } catch (error) {
+      setErro(error.response?.data?.erro || "Não foi possível excluir a tarefa.");
+    }
+  };
+
+  const alternarConcluida = async (id, novoStatus) => {
+    const tarefa = tarefas.find((item) => item.id === id);
+    if (!tarefa) return;
+
+    const status =
+      novoStatus || (tarefa.status === "done" ? "pending" : "done");
+    setErro("");
+    try {
+      const resposta = await api.put(
+        `/tarefas/${id}`,
+        { coluna: colunaPorStatus[status] },
+        { params: { usuarioId: tarefa.usuarioId } }
+      );
+      setTarefas((current) =>
+        current.map((item) =>
+          item.id === id ? normalizarTarefa(resposta.data) : item
+        )
+      );
+    } catch (error) {
+      setErro(error.response?.data?.erro || "Não foi possível atualizar a tarefa.");
+    }
   };
 
   return (
     <>
       <Header titulo=" TaskFlow " subtitulo="Gerencie suas tarefas" />
       <main className="container">
-        <Kanban
-          tarefas={tarefas}
-          onAdicionar={abrirCriar}
-          onDeletar={deletarTarefa}
-          onConcluir={alternarConcluida}
-          onEditar={abrirEditar}
-        />
+        {erro && <p role="alert">{erro}</p>}
+        {carregando ? (
+          <p>Carregando tarefas...</p>
+        ) : (
+          <Kanban
+            tarefas={tarefas}
+            usuarioId={usuario?.id}
+            onAdicionar={abrirCriar}
+            onDeletar={deletarTarefa}
+            onConcluir={alternarConcluida}
+            onEditar={abrirEditar}
+          />
+        )}
 
         <ModalTarefa
           isOpen={modalOpen}
