@@ -142,7 +142,6 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       if (req.method === 'GET' && url.pathname === '/tasks') {
-      if (req.method === 'GET' && url.pathname === '/tasks') {
         const tarefas = tasks
           .filter((task) => task.userId === usuario.id)
           .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -225,7 +224,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`TaskFlow API rodando em http://localhost:${PORT}`);
 });
 
-const encerrar = async () => {
+const encerrar = () => {
   server.close();
 };
 
