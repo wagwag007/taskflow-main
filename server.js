@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import http from 'node:http';
 import process from 'node:process';
-import { PrismaClient } from '@prisma/client';
 
 const PORT = process.env.PORT || 3000;
-const prisma = new PrismaClient();
+const tasks = [];
+let nextTaskId = 1;
 
 const users = [
   {
@@ -128,12 +128,6 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      await prisma.user.upsert({
-        where: { id: usuario.id },
-        update: { nome: usuario.nome, email: usuario.email },
-        create: { id: usuario.id, nome: usuario.nome, email: usuario.email },
-      });
-
       sendJson(res, 200, {
         token: `taskflow-token-${usuario.id}`,
         usuario: { id: usuario.id, nome: usuario.nome, email: usuario.email },
@@ -147,12 +141,11 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 401, { erro: 'Faça login para acessar as tarefas.' });
         return;
       }
-
       if (req.method === 'GET' && url.pathname === '/tasks') {
-        const tarefas = await prisma.task.findMany({
-          where: { userId: usuario.id },
-          orderBy: { createdAt: 'asc' },
-        });
+      if (req.method === 'GET' && url.pathname === '/tasks') {
+        const tarefas = tasks
+          .filter((task) => task.userId === usuario.id)
+          .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
         sendJson(res, 200, tarefas);
         return;
       }
@@ -165,9 +158,15 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const tarefa = await prisma.task.create({
-          data: { ...resultado.tarefa, userId: usuario.id },
-        });
+        const agora = new Date().toISOString();
+        const tarefa = {
+          id: nextTaskId++,
+          ...resultado.tarefa,
+          userId: usuario.id,
+          createdAt: agora,
+          updatedAt: agora,
+        };
+        tasks.push(tarefa);
         sendJson(res, 201, tarefa);
         return;
       }
@@ -176,13 +175,14 @@ const server = http.createServer(async (req, res) => {
       if (match && ['PUT', 'DELETE'].includes(req.method)) {
         const id = Number(match[1]);
         if (req.method === 'DELETE') {
-          const resultado = await prisma.task.deleteMany({
-            where: { id, userId: usuario.id },
-          });
-          if (resultado.count === 0) {
+          const index = tasks.findIndex(
+            (task) => task.id === id && task.userId === usuario.id
+          );
+          if (index === -1) {
             sendJson(res, 404, { erro: 'Tarefa não encontrada.' });
             return;
           }
+          tasks.splice(index, 1);
           sendJson(res, 200, { ok: true });
           return;
         }
@@ -194,16 +194,17 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const atualizada = await prisma.task.updateMany({
-          where: { id, userId: usuario.id },
-          data: resultado.tarefa,
-        });
-        if (atualizada.count === 0) {
+        const tarefa = tasks.find(
+          (task) => task.id === id && task.userId === usuario.id
+        );
+        if (!tarefa) {
           sendJson(res, 404, { erro: 'Tarefa não encontrada.' });
           return;
         }
 
-        const tarefa = await prisma.task.findUnique({ where: { id } });
+        Object.assign(tarefa, resultado.tarefa, {
+          updatedAt: new Date().toISOString(),
+        });
         sendJson(res, 200, tarefa);
         return;
       }
@@ -226,7 +227,6 @@ server.listen(PORT, '0.0.0.0', () => {
 
 const encerrar = async () => {
   server.close();
-  await prisma.$disconnect();
 };
 
 process.on('SIGINT', encerrar);
