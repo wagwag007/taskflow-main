@@ -2,6 +2,12 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## API
+
+The frontend uses `https://task-flow-back-vert.vercel.app` by default. To use a
+different API, set `VITE_API_URL` to its base URL. For local development,
+`VITE_BASE_URL_API` is used as a fallback when `VITE_API_URL` is not set.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
